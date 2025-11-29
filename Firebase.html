@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Ultimate Explorer</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --accent: #4cc9f0;
+            --bg-body: #f3f4f6;
+            --bg-card: #ffffff;
+            --bg-sidebar: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --border: #e5e7eb;
+            --folder: #fbbf24;
+            --string: #10b981;
+            --number: #3b82f6;
+            --boolean: #f59e0b;
+            --null: #9ca3af;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        [data-theme="dark"] {
+            /* Dark Theme Variables */
+            --primary: #4cc9f0;
+            --secondary: #4361ee;
+            --accent: #3f37c9;
+            --bg-body: #111827;
+            --bg-card: #1f2937;
+            --bg-sidebar: #1f2937;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --border: #374151;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            outline: none;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+            display: flex;
+        }
+
+        /* Sidebar */
+        aside {
+            width: 280px;
+            background-color: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease;
+            z-index: 50;
+        }
+
+        .brand {
+            padding: 20px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .config-group {
+            margin-bottom: 25px;
+        }
+
+        .config-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-control {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .input-control:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(67, 97, 238, 0.2);
+        }
+
+        .history-item {
+            padding: 8px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            margin-bottom: 5px;
+        }
+
+        .history-item:hover {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+        }
+
+        .history-item .material-icons {
+            font-size: 16px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s, opacity 0.2s;
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(67, 97, 238, 0.3);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.85rem;
+            width: auto;
+        }
+
+        .footer {
+            padding: 15px;
+            border-top: 1px solid var(--border);
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        /* Main Content */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Top Bar */
+        .topbar {
+            height: 64px;
+            border-bottom: 1px solid var(--border);
+            background-color: var(--bg-card);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            justify-content: space-between;
+        }
+
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-right: 20px;
+            flex: 1;
+        }
+
+        .crumb {
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .crumb:hover {
+            background-color: var(--bg-body);
+            color: var(--primary);
+        }
+
+        .crumb.active {
+            color: var(--text-main);
+            font-weight: 600;
+            cursor: default;
+        }
+
+        .crumb-separator {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background-color: var(--bg-body);
+            color: var(--primary);
+        }
+
+        /* Explorer View */
+        .explorer-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .node-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .node-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            height: 140px;
+        }
+
+        .node-card:hover {
+            border-color: var(--primary);
+            box-shadow: var(--shadow);
+            transform: translateY(-2px);
+        }
+
+        .node-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .node-icon.folder { color: var(--folder); }
+        .node-icon.string { color: var(--string); }
+        .node-icon.number { color: var(--number); }
+        .node-icon.boolean { color: var(--boolean); }
+
+        .node-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.95rem;
+        }
+
+        .node-value {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .node-actions-hover {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: none;
+            gap: 5px;
+        }
+
+        .node-card:hover .node-actions-hover {
+            display: flex;
+        }
+
+        .mini-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background-color: var(--bg-body);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .mini-btn:hover {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .empty-state i {
+            font-size: 64px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal {
+            background-color: var(--bg-card);
+            border-radius: 12px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .code-editor {
+            width: 100%;
+            min-height: 200px;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 15px;
+            background-color: var(--bg-body);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-main);
+            resize: vertical;
+            line-height: 1.5;
+        }
+
+        /* Toggle Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .switch input { opacity: 0; width: 0; height: 0; }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            padding: 12px 20px;
+            background-color: var(--bg-card);
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transform: translateX(120%);
+            transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            z-index: 200;
+            color: var(--text-main);
+        }
+
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-color: #10b981; }
+        .toast.error { border-color: #ef4444; }
+
+        /* Loader */
+        .loader-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255,255,255,0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            backdrop-filter: blur(1px);
+        }
+        [data-theme="dark"] .loader-overlay { background: rgba(0,0,0,0.5); }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0,0,0,0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            body { flex-direction: column; }
+            aside { width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            aside.collapsed .sidebar-content { display: none; }
+            .brand { justify-content: space-between; cursor: pointer; }
+            .mobile-toggle { display: block; }
+            main { height: calc(100vh - 60px); }
+        }
+        @media (min-width: 769px) {
+            .mobile-toggle { display: none; }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- Sidebar -->
+    <aside id="sidebar">
+        <div class="brand" onclick="toggleSidebar()">
+            <span><i class="material-icons" style="vertical-align: middle;">storage</i> FireExplore</span>
+            <i class="material-icons mobile-toggle">menu</i>
+        </div>
+        <div class="sidebar-content">
+            <div class="config-group">
+                <div class="config-label">Connection</div>
+                <div class="input-group">
+                    <input type="text" id="dbUrl" class="input-control" placeholder="https://your-project.firebaseio.com">
+                </div>
+                <!-- Optional Auth Field -->
+                <div class="input-group">
+                   <input type="text" id="dbSecret" class="input-control" placeholder="Auth Token (Optional)" title="Legacy Database Secret or Auth Token">
+                </div>
+                <button class="btn btn-primary" onclick="connectDB()">
+                    <i class="material-icons">link</i> Connect
+                </button>
+            </div>
+
+            <div class="config-group">
+                <div class="config-label">Settings</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Dark Mode</span>
+                    <label class="switch">
+                        <input type="checkbox" id="themeToggle" onchange="toggleTheme()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="font-size: 0.9rem; color: var(--text-muted);">Realtime Updates</span>
+                    <label class="switch">
+                        <input type="checkbox" id="realtimeToggle" onchange="toggleRealtime()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="config-group">
+                <div class="config-label">History</div>
+                <div id="historyList">
+                    <!-- History items injected here -->
+                </div>
+                <button class="btn btn-sm btn-secondary" onclick="clearHistory()" style="margin-top: 10px;">Clear History</button>
+            </div>
+        </div>
+        <div class="footer">
+            v2.0 • Enhanced Edition
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main>
+        <div class="topbar">
+            <div class="breadcrumbs" id="breadcrumbs">
+                <span class="crumb active" onclick="navToRoot()"><i class="material-icons" style="font-size: 18px;">home</i> Root</span>
+            </div>
+            <div class="actions">
+                <button class="icon-btn" title="Refresh" onclick="refreshData()"><i class="material-icons">refresh</i></button>
+                <button class="icon-btn" title="Add Node" onclick="openAddModal()"><i class="material-icons">add_circle_outline</i></button>
+                <button class="icon-btn" title="Import JSON" onclick="openImportModal()"><i class="material-icons">file_upload</i></button>
+                <button class="icon-btn" title="Export Path" onclick="exportData()"><i class="material-icons">file_download</i></button>
+                <button class="icon-btn" title="Search" onclick="focusSearch()"><i class="material-icons">search</i></button>
+            </div>
+        </div>
+
+        <div style="padding: 10px 20px; border-bottom: 1px solid var(--border); background: var(--bg-card);">
+            <input type="text" id="searchInput" class="input-control" placeholder="Filter current view..." onkeyup="filterNodes()">
+        </div>
+
+        <div class="explorer-container" id="explorer">
+            <div class="empty-state">
+                <i class="material-icons">settings_input_component</i>
+                <h3>Not Connected</h3>
+                <p>Enter your Firebase Database URL in the sidebar to begin.</p>
+            </div>
+        </div>
+        
+        <div id="loader" class="loader-overlay" style="display: none;">
+            <div class="spinner"></div>
+        </div>
+    </main>
+
+    <!-- Edit Modal -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">Edit Node</span>
+                <button class="icon-btn" onclick="closeModal('editModal')"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editKey">
+                <textarea id="editValue" class="code-editor"></textarea>
+                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                    * Accepts valid JSON. Strings must be quoted.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('editModal')">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="saveEdit()">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Modal -->
+    <div class="modal-overlay" id="addModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Add New Node</span>
+                <button class="icon-btn" onclick="closeModal('addModal')"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label class="config-label">Key Name</label>
+                    <input type="text" id="newKey" class="input-control" placeholder="e.g., users">
+                </div>
+                <div class="input-group">
+                    <label class="config-label">Initial Value (JSON)</label>
+                    <textarea id="newValue" class="code-editor" placeholder='e.g., {"name": "John"}'></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('addModal')">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="createNode()">Create Node</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div class="modal-overlay" id="importModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">Import JSON</span>
+                <button class="icon-btn" onclick="closeModal('importModal')"><i class="material-icons">close</i></button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; color: var(--text-muted);">Upload a JSON file to merge into the current path: <code id="importPathDisplay"></code></p>
+                <input type="file" id="jsonFile" accept=".json" class="input-control">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary btn-sm" onclick="closeModal('importModal')">Cancel</button>
+                <button class="btn btn-primary btn-sm" onclick="processImport()">Import</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        <i class="material-icons" id="toastIcon">info</i>
+        <span id="toastMsg">Notification</span>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+
+    <script>
+        // State
+        let db = null;
+        let currentPath = []; // Array of keys, empty = root
+        let app = null;
+        let listener = null;
+        let currentData = null; // Stores the object at currentPath
+
+        // DOM Elements
+        const el = {
+            dbUrl: document.getElementById('dbUrl'),
+            dbSecret: document.getElementById('dbSecret'),
+            explorer: document.getElementById('explorer'),
+            breadcrumbs: document.getElementById('breadcrumbs'),
+            loader: document.getElementById('loader'),
+            historyList: document.getElementById('historyList'),
+            themeToggle: document.getElementById('themeToggle'),
+            realtimeToggle: document.getElementById('realtimeToggle'),
+            editValue: document.getElementById('editValue'),
+            editKey: document.getElementById('editKey'),
+            newKey: document.getElementById('newKey'),
+            newValue: document.getElementById('newValue')
+        };
+
+        // Initialization
+        window.addEventListener('DOMContentLoaded', () => {
+            loadHistory();
+            const savedTheme = localStorage.getItem('fb_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            el.themeToggle.checked = savedTheme === 'dark';
+        });
+
+        // --- Core Functions ---
+
+        async function connectDB() {
+            const url = el.dbUrl.value.trim();
+            const token = el.dbSecret.value.trim();
+
+            if (!url) return showToast('Please enter a URL', 'error');
+
+            showLoader(true);
+
+            try {
+                if (app) await app.delete();
+
+                const config = { databaseURL: url };
+                app = firebase.initializeApp(config);
+                db = firebase.database();
+
+                // Simple auth via secret if provided (Not standard but works on some old setups or via Custom Tokens if generated correctly)
+                // Note: Real "Database Secrets" are legacy. If the user provides a Custom Token, we use signInWithCustomToken
+                if (token) {
+                    // Try as custom token first
+                    try {
+                        await firebase.auth().signInWithCustomToken(token);
+                    } catch(e) {
+                         console.warn("Auth token failed, proceeding without auth or assuming legacy secret embedded behavior not supported by modern SDK directly without admin privileges.");
+                    }
+                }
+
+                // Test connection
+                await db.ref().child('test_connection_probe').limitToFirst(1).once('value');
+                
+                addToHistory(url);
+                showToast('Connected Successfully', 'success');
+                currentPath = [];
+                fetchData();
+
+            } catch (error) {
+                console.error(error);
+                // Even if the probe fails (permission denied), we might be able to read other parts. 
+                // But usually it means bad URL or Perms.
+                if(error.code === 'PERMISSION_DENIED') {
+                    showToast('Connected, but Permission Denied at Root.', 'error');
+                    // Still try to load
+                    currentPath = [];
+                    fetchData();
+                } else {
+                    showToast('Connection Failed: ' + error.message, 'error');
+                }
+            } finally {
+                showLoader(false);
+            }
+        }
+
+        function fetchData() {
+            if (!db) return;
+
+            // Detach old listener if exists
+            if (listener) {
+                const oldRef = db.ref(getPathString());
+                oldRef.off('value', listener);
+                listener = null;
+            }
+
+            const pathStr = getPathString();
+            const ref = db.ref(pathStr);
+            renderBreadcrumbs();
+
+            showLoader(true);
+
+            const isRealtime = el.realtimeToggle.checked;
+
+            if (isRealtime) {
+                listener = ref.on('value', (snapshot) => {
+                    handleDataSnapshot(snapshot);
+                    showLoader(false);
+                }, (error) => {
+                    showLoader(false);
+                    showToast('Read Error: ' + error.message, 'error');
+                    renderError(error);
+                });
+            } else {
+                ref.once('value')
+                    .then((snapshot) => {
+                        handleDataSnapshot(snapshot);
+                        showLoader(false);
+                    })
+                    .catch((error) => {
+                        showLoader(false);
+                        showToast('Read Error: ' + error.message, 'error');
+                        renderError(error);
+                    });
+            }
+        }
+
+        function handleDataSnapshot(snapshot) {
+            currentData = snapshot.val();
+            renderExplorer(currentData);
+        }
+
+        function getPathString() {
+            return currentPath.length > 0 ? currentPath.join('/') : '/';
+        }
+
+        // --- Navigation ---
+
+        function enterFolder(key) {
+            currentPath.push(key);
+            fetchData();
+        }
+
+        function navToRoot() {
+            currentPath = [];
+            fetchData();
+        }
+
+        function navToLevel(index) {
+            currentPath = currentPath.slice(0, index + 1);
+            fetchData();
+        }
+
+        // --- Rendering ---
+
+        function renderBreadcrumbs() {
+            const container = el.breadcrumbs;
+            container.innerHTML = `<span class="crumb" onclick="navToRoot()"><i class="material-icons" style="font-size: 18px;">home</i> Root</span>`;
+            
+            currentPath.forEach((folder, index) => {
+                container.innerHTML += `<span class="crumb-separator">/</span>`;
+                const isLast = index === currentPath.length - 1;
+                const activeClass = isLast ? 'active' : '';
+                const clickAction = isLast ? '' : `onclick="navToLevel(${index})"`;
+                container.innerHTML += `<span class="crumb ${activeClass}" ${clickAction}>${folder}</span>`;
+            });
+            
+            // Auto scroll to right
+            setTimeout(() => container.scrollLeft = container.scrollWidth, 50);
+        }
+
+        function renderExplorer(data) {
+            const container = el.explorer;
+            container.innerHTML = '';
+
+            if (data === null) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="material-icons">folder_open</i>
+                        <h3>Null / Empty</h3>
+                        <p>This node does not exist or has no data.</p>
+                    </div>`;
+                return;
+            }
+
+            if (typeof data !== 'object') {
+                // It's a primitive value at this path
+                renderPrimitiveView(data);
+                return;
+            }
+
+            const keys = Object.keys(data);
+            if (keys.length === 0) {
+                 container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="material-icons">folder_open</i>
+                        <h3>Empty Object</h3>
+                    </div>`;
+                return;
+            }
+
+            const grid = document.createElement('div');
+            grid.className = 'node-grid';
+
+            keys.forEach(key => {
+                const val = data[key];
+                const type = getType(val);
+                const isObj = type === 'object';
+                const icon = getIcon(type);
+                const colorClass = type;
+                
+                const valStr = isObj ? `{ ${Object.keys(val).length} items }` : String(val);
+
+                const card = document.createElement('div');
+                card.className = 'node-card';
+                card.setAttribute('data-key', key); // for filtering
+
+                // Double click to enter if object
+                if (isObj) {
+                    card.ondblclick = () => enterFolder(key);
+                }
+
+                card.innerHTML = `
+                    <div class="node-actions-hover">
+                        <div class="mini-btn" onclick="prepareEdit('${key}')" title="Edit"><i class="material-icons" style="font-size:16px">edit</i></div>
+                        <div class="mini-btn" onclick="deleteNode('${key}')" title="Delete"><i class="material-icons" style="font-size:16px">delete</i></div>
+                    </div>
+                    <i class="material-icons node-icon ${colorClass}">${icon}</i>
+                    <div class="node-name" title="${key}">${key}</div>
+                    <div class="node-value">${valStr}</div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            container.appendChild(grid);
+        }
+
+        function renderPrimitiveView(val) {
+            // If the user navigated to a specific leaf node
+            const container = el.explorer;
+            container.innerHTML = `
+                <div style="max-width: 600px; margin: 40px auto; background: var(--bg-card); padding: 30px; border-radius: 12px; border: 1px solid var(--border); text-align: center;">
+                    <div style="font-size: 1rem; color: var(--text-muted); margin-bottom: 10px;">Leaf Node Value</div>
+                    <div style="font-family: 'JetBrains Mono'; font-size: 1.5rem; margin-bottom: 20px;">${val}</div>
+                    <div style="display: flex; justify-content: center; gap: 10px;">
+                        <button class="btn btn-primary btn-sm" onclick="prepareEditLeaf(${JSON.stringify(val)})">Edit Value</button>
+                        <button class="btn btn-danger btn-sm" onclick="deletePath()">Delete Node</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderError(error) {
+             el.explorer.innerHTML = `
+                <div class="empty-state">
+                    <i class="material-icons" style="color: #ef4444">error_outline</i>
+                    <h3>Access Denied / Error</h3>
+                    <p>${error.message}</p>
+                </div>`;
+        }
+
+        // --- CRUD Operations ---
+
+        function prepareEdit(key) {
+            const val = currentData[key];
+            document.getElementById('modalTitle').textContent = `Edit: ${key}`;
+            el.editKey.value = key;
+            el.editValue.value = JSON.stringify(val, null, 2);
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function prepareEditLeaf(val) {
+            // Editing the current path itself
+            document.getElementById('modalTitle').textContent = `Edit Current Node`;
+            el.editKey.value = '__SELF__'; // Special marker
+            el.editValue.value = JSON.stringify(val, null, 2);
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function saveEdit() {
+            const key = el.editKey.value;
+            const valStr = el.editValue.value;
+            let val;
+
+            try {
+                val = JSON.parse(valStr);
+            } catch (e) {
+                // If it fails to parse, ask if they want to save as string
+                if(confirm("Invalid JSON. Save as plain string?")) {
+                    val = valStr;
+                } else {
+                    return;
+                }
+            }
+
+            let ref;
+            if (key === '__SELF__') {
+                ref = db.ref(getPathString());
+            } else {
+                ref = db.ref(getPathString()).child(key);
+            }
+
+            ref.set(val)
+                .then(() => {
+                    showToast('Saved successfully', 'success');
+                    closeModal('editModal');
+                    if (!el.realtimeToggle.checked) fetchData(); // refresh if not live
+                })
+                .catch(err => showToast(err.message, 'error'));
+        }
+
+        function deleteNode(key) {
+            if(!confirm(`Delete node "${key}"? This cannot be undone.`)) return;
+            
+            db.ref(getPathString()).child(key).remove()
+                .then(() => {
+                    showToast('Deleted', 'success');
+                    if (!el.realtimeToggle.checked) fetchData();
+                })
+                .catch(err => showToast(err.message, 'error'));
+        }
+
+        function deletePath() {
+             if(!confirm(`Delete this entire node?`)) return;
+             
+             db.ref(getPathString()).remove()
+                .then(() => {
+                    showToast('Deleted', 'success');
+                    // Go up one level
+                    currentPath.pop();
+                    fetchData();
+                })
+                .catch(err => showToast(err.message, 'error'));
+        }
+
+        function createNode() {
+            const key = el.newKey.value.trim();
+            const valStr = el.newValue.value.trim();
+            
+            if(!key) return showToast('Key is required', 'error');
+            
+            let val;
+            try {
+                val = valStr ? JSON.parse(valStr) : "";
+            } catch(e) {
+                val = valStr; // Fallback to string
+            }
+
+            db.ref(getPathString()).child(key).set(val)
+                .then(() => {
+                    showToast('Node Created', 'success');
+                    closeModal('addModal');
+                    el.newKey.value = '';
+                    el.newValue.value = '';
+                    if (!el.realtimeToggle.checked) fetchData();
+                })
+                .catch(err => showToast(err.message, 'error'));
+        }
+
+        // --- Import/Export ---
+
+        function openImportModal() {
+            if(!db) return showToast("Connect first", "error");
+            document.getElementById('importPathDisplay').textContent = getPathString() || '/';
+            document.getElementById('importModal').style.display = 'flex';
+        }
+
+        function processImport() {
+            const fileInput = document.getElementById('jsonFile');
+            const file = fileInput.files[0];
+            if(!file) return showToast("Select a file", "error");
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    // We use update to merge, or set to overwrite? 
+                    // Let's use update to be safer, but if it's a primitive it might fail. 
+                    // Standard import usually replaces. Let's ask via behavior: using .update for merge
+                    
+                    showLoader(true);
+                    db.ref(getPathString()).update(json)
+                        .then(() => {
+                            showToast("Import Successful", "success");
+                            closeModal("importModal");
+                            if (!el.realtimeToggle.checked) fetchData();
+                        })
+                        .catch(err => showToast("Import Failed: " + err.message, "error"))
+                        .finally(() => showLoader(false));
+                } catch(err) {
+                    showToast("Invalid JSON File", "error");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function exportData() {
+            if(!db || !currentData) return showToast("No data to export", "error");
+            
+            const dataStr = JSON.stringify(currentData, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const lastKey = currentPath.length > 0 ? currentPath[currentPath.length-1] : 'root';
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `firebase_${lastKey}_${new Date().getTime()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast("Export started", "success");
+        }
+
+
+        // --- UI Helpers ---
+
+        function filterNodes() {
+            const term = document.getElementById('searchInput').value.toLowerCase();
+            const cards = document.querySelectorAll('.node-card');
+            cards.forEach(card => {
+                const key = card.getAttribute('data-key').toLowerCase();
+                card.style.display = key.includes(term) ? 'flex' : 'none';
+            });
+        }
+
+        function getType(val) {
+            if (val === null) return 'null';
+            if (Array.isArray(val)) return 'object'; // treat arrays as objects for explorer
+            return typeof val;
+        }
+
+        function getIcon(type) {
+            switch (type) {
+                case 'object': return 'folder';
+                case 'string': return 'text_fields';
+                case 'number': return 'tag';
+                case 'boolean': return 'toggle_on';
+                default: return 'help_outline';
+            }
+        }
+
+        function toggleTheme() {
+            const theme = el.themeToggle.checked ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('fb_theme', theme);
+        }
+
+        function toggleRealtime() {
+            fetchData(); // Reloads with new setting
+        }
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('collapsed');
+            // Mobile logic
+            if(window.innerWidth <= 768) {
+                if(sb.style.height === 'auto' || sb.style.height === '') {
+                    sb.style.height = '60px'; // collapsed state simulation for mobile
+                } else {
+                    sb.style.height = 'auto';
+                }
+            }
+        }
+
+        // --- History Management ---
+
+        function loadHistory() {
+            const hist = JSON.parse(localStorage.getItem('fb_history') || '[]');
+            renderHistory(hist);
+        }
+
+        function addToHistory(url) {
+            let hist = JSON.parse(localStorage.getItem('fb_history') || '[]');
+            // Remove if exists to move to top
+            hist = hist.filter(h => h !== url);
+            hist.unshift(url);
+            if(hist.length > 5) hist.pop(); // Keep last 5
+            localStorage.setItem('fb_history', JSON.stringify(hist));
+            renderHistory(hist);
+        }
+
+        function renderHistory(hist) {
+            el.historyList.innerHTML = '';
+            hist.forEach(url => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `<i class="material-icons">history</i> <span style="text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${url}</span>`;
+                div.onclick = () => { el.dbUrl.value = url; };
+                el.historyList.appendChild(div);
+            });
+        }
+
+        function clearHistory() {
+            localStorage.removeItem('fb_history');
+            renderHistory([]);
+        }
+
+        // --- Utilities ---
+
+        function showToast(msg, type = 'info') {
+            const t = document.getElementById('toast');
+            const i = document.getElementById('toastIcon');
+            const m = document.getElementById('toastMsg');
+            
+            t.className = `toast ${type} show`;
+            m.textContent = msg;
+            i.textContent = type === 'success' ? 'check_circle' : (type === 'error' ? 'error' : 'info');
+            
+            setTimeout(() => {
+                t.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoader(show) {
+            el.loader.style.display = show ? 'flex' : 'none';
+        }
+
+        function openAddModal() {
+            if(!db) return showToast("Connect first", "error");
+            document.getElementById('addModal').style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+        
+        // Mobile sidebar helper
+        window.addEventListener('resize', () => {
+            if(window.innerWidth > 768) {
+                document.getElementById('sidebar').style.height = 'auto';
+            }
+        });
+        
+        function focusSearch() {
+            document.getElementById('searchInput').focus();
+        }
+
+    </script>
+</body>
+</html>
+
